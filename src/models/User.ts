@@ -1,7 +1,15 @@
-import { Entity, Column, ManyToMany, JoinTable } from "typeorm";
+import {
+  Entity,
+  Column,
+  ManyToMany,
+  JoinTable,
+  OneToOne,
+  JoinColumn,
+} from "typeorm";
 import { IsEmail, Length } from "class-validator";
 import { Task } from "./Task";
 import { Labenu } from "./Labenu";
+import { RefreshToken } from "./RefreshToken";
 
 @Entity()
 export class User extends Labenu {
@@ -20,6 +28,9 @@ export class User extends Labenu {
       "your password must contain a minimum of 6 characters and a maximum of 30 characters. ",
   })
   password: string;
+
+  @OneToOne(() => RefreshToken, (refresh) => refresh.user_id)
+  refresh_token: RefreshToken;
 
   @ManyToMany(() => Task)
   @JoinTable({ name: "task_user" })

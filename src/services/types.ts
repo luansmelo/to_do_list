@@ -1,6 +1,18 @@
 type UserResponse = {
-  user: Partial<UserRequest>; // partial leaves all typing optional.
   token: string;
+};
+
+type UserReturnToken = {
+  findTokenId: {
+    id: string;
+    expiresIn: number;
+    user_id: string;
+  };
+  resultRefreshToken: {
+    id: string;
+    expiresIn: number;
+    user_id: string;
+  };
 };
 
 type UserRequest = {
@@ -20,4 +32,4 @@ type UserRequestLogin = {
   password: string;
 };
 
-export { UserResponse, UserRequest, UserRequestById, UserRequestLogin };
+export { UserResponse, UserRequest, UserRequestById, UserRequestLogin, UserReturnToken };

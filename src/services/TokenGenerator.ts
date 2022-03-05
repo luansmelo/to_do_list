@@ -1,12 +1,12 @@
 import * as jwt from "jsonwebtoken";
-interface authenticationData {
+export interface authenticationData {
   id: string;
 }
 
 export class Authenticator {
   public generateToken = (payload: authenticationData) => {
     const token: string = jwt.sign(payload, process.env.JWT_KEY, {
-      expiresIn: "10h",
+      expiresIn: "15s",
     });
     return token;
   };
@@ -18,7 +18,6 @@ export class Authenticator {
         id: tokenData.id,
       };
     } catch (error) {
-      console.log(error);
       return null;
     }
   };

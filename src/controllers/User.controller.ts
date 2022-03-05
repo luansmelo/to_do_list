@@ -31,6 +31,15 @@ class UserController {
     return response.status(200).json(sessionUser);
   };
 
+  auth = async (request: Request, response: Response): Promise<Response> => {
+    const { refresh_token } = request.body;
+    const refreshTokenUser = this.userRepository;
+    const token = await refreshTokenUser.refreshToken(refresh_token);
+
+    if (token instanceof Error) return response.status(400).json(token.message);
+    return response.json(token);
+  };
+
   findUserById = async (
     request: Request,
     response: Response
@@ -52,8 +61,10 @@ class UserController {
   ): Promise<Response> => {
     const { id } = request.params;
     const { name, nickname, email, password } = request.body;
+    const authecation: string = request.headers.authorization as string;
+
     const userUpdate = this.userRepository;
-    const result = await userUpdate.update({
+    const result = await userUpdate.update(authecation, {
       id,
       name,
       nickname,
@@ -68,8 +79,9 @@ class UserController {
 
   deleteUserById = async (request: Request, response: Response) => {
     const { id } = request.params;
+    const authecation: string = request.headers.authorization as string;
     const userDelete = this.userRepository;
-    const result = await userDelete.delete({ id });
+    const result = await userDelete.delete(authecation, { id });
 
     if (result instanceof Error)
       return response.status(200).json(result.message);
@@ -77,4 +89,4 @@ class UserController {
   };
 }
 
-export default new UserController();
+export { UserController };

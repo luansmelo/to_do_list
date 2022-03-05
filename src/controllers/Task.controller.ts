@@ -8,9 +8,7 @@ export class TaskController {
     response: Response
   ): Promise<Response> => {
     const { name, description, limitDate } = request.body;
-    const { auth } = request.headers;
 
-    
     const task: TaskBusiness = new TaskBusiness();
     const result: Task | Error = await task.create({
       name,

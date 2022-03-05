@@ -1,6 +1,6 @@
 import * as dayjs from "dayjs";
 import { validate, ValidationError } from "class-validator";
-import { getRepository, Repository } from "typeorm";
+import { DeleteResult, getRepository, Repository } from "typeorm";
 import { RefreshToken } from "../models/RefreshToken";
 import { User } from "../models/User";
 import { GenerateRefreshToken } from "../provider/GenerateRefreshToken";
@@ -93,7 +93,6 @@ export class UserBusiness {
     );
 
     if (accessToken === null) return new Error("invalid token");
-
     if (!updateUser) return new Error("provided id not found.");
     updateUser.name = name ? name : updateUser.name;
     updateUser.nickname = nickname ? nickname : updateUser.nickname;
@@ -132,10 +131,6 @@ export class UserBusiness {
     const accessToken = getRepository(RefreshToken);
     await accessToken.delete({ user_id: findTokenId.id });
 
-    const token: string = new Authenticator().generateToken({
-      id: findTokenId.user_id,
-    });
-
     const refreshTokenExpired: boolean = dayjs().isAfter(
       dayjs.unix(findTokenId.expiresIn)
     );
@@ -143,7 +138,7 @@ export class UserBusiness {
     const newRepository: Repository<RefreshToken> = getRepository(RefreshToken);
     if (refreshTokenExpired) {
       await newRepository.delete({
-        id: findTokenId.user_id,
+        id: findTokenId.id,
       });
 
       const newRefreshToken: GenerateRefreshToken = new GenerateRefreshToken();
@@ -153,6 +148,10 @@ export class UserBusiness {
 
       return { findTokenId, resultRefreshToken };
     }
+
+    const token: string = new Authenticator().generateToken({
+      id: findTokenId.user_id,
+    });
 
     return { token };
   };

@@ -4,9 +4,16 @@ export interface authenticationData {
 }
 
 export class Authenticator {
+  public getUnsafeTokenData = (token: string): authenticationData => {
+    const tokenData = jwt.decode(token) as any;
+    return {
+      id: tokenData.id,
+    };
+  };
+
   public generateToken = (payload: authenticationData) => {
     const token: string = jwt.sign(payload, process.env.JWT_KEY, {
-      expiresIn: "15s",
+      expiresIn: "900s",
     });
     return token;
   };

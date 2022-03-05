@@ -1,3 +1,5 @@
+import { Schema, GetTypeGuard } from "@srhenry/type-utils";
+
 type UserResponse = {
   token: string;
 };
@@ -32,4 +34,27 @@ type UserRequestLogin = {
   password: string;
 };
 
-export { UserResponse, UserRequest, UserRequestById, UserRequestLogin, UserReturnToken };
+
+function isDate(propDate: unknown): propDate is Date {
+  return propDate instanceof Date;
+}
+
+const taskRequest = Schema.object({
+  name: Schema.string(),
+  description: Schema.string(),
+  limitDate: Schema.string(),
+  users: Schema.array(Schema.string()),
+});
+
+type TaskRequest = GetTypeGuard<typeof taskRequest>
+
+
+export {
+  UserResponse,
+  UserRequest,
+  UserRequestById,
+  UserRequestLogin,
+  UserReturnToken,
+  TaskRequest,
+  taskRequest,
+};

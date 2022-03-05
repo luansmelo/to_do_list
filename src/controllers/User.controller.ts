@@ -61,10 +61,10 @@ class UserController {
   ): Promise<Response> => {
     const { id } = request.params;
     const { name, nickname, email, password } = request.body;
-    const authecation: string = request.headers.authorization as string;
+    const authentication: string = request.headers.authorization as string;
 
     const userUpdate = this.userRepository;
-    const result = await userUpdate.update(authecation, {
+    const result = await userUpdate.update(authentication, {
       id,
       name,
       nickname,

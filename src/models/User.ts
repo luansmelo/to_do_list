@@ -1,11 +1,4 @@
-import {
-  Entity,
-  Column,
-  ManyToMany,
-  JoinTable,
-  OneToOne,
-  JoinColumn,
-} from "typeorm";
+import { Entity, Column, OneToOne, ManyToMany, OneToMany } from "typeorm";
 import { IsEmail, Length } from "class-validator";
 import { Task } from "./Task";
 import { Labenu } from "./Labenu";
@@ -33,6 +26,8 @@ export class User extends Labenu {
   refresh_token: RefreshToken;
 
   @ManyToMany(() => Task)
-  @JoinTable({ name: "task_user" })
-  task: Task[];
+  tasks: Task[];
+  
+  @OneToMany(() => Task, task => task.creatorUser)
+  ownedTasks: Task[]
 }

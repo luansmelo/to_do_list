@@ -1,6 +1,6 @@
 import * as dayjs from "dayjs";
 import { validate, ValidationError } from "class-validator";
-import { DeleteResult, getRepository, Repository } from "typeorm";
+import { getRepository, Repository } from "typeorm";
 import { RefreshToken } from "../models/RefreshToken";
 import { User } from "../models/User";
 import { GenerateRefreshToken } from "../provider/GenerateRefreshToken";
@@ -88,9 +88,8 @@ export class UserBusiness {
   ): Promise<User | Error> => {
     const repository: Repository<User> = getRepository(User);
     const updateUser: User = await repository.findOne({ id });
-    const accessToken: authenticationData = new Authenticator().getTokenData(
-      token
-    );
+    const accessToken: authenticationData =
+      new Authenticator().getUnsafeTokenData(token);
 
     if (accessToken === null) return new Error("invalid token");
     if (!updateUser) return new Error("provided id not found.");
@@ -108,9 +107,8 @@ export class UserBusiness {
   ): Promise<Error | User> => {
     const repository: Repository<User> = getRepository(User);
 
-    const accessToken: authenticationData = new Authenticator().getTokenData(
-      token
-    );
+    const accessToken: authenticationData =
+      new Authenticator().getUnsafeTokenData(token);
 
     if (accessToken === null) return new Error("invalid token");
 

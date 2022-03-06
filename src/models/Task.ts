@@ -2,9 +2,11 @@ import { Length } from "class-validator";
 import {
   Column,
   Entity,
-  JoinTable,
-  ManyToMany,
   CreateDateColumn,
+  OneToMany,
+  ManyToMany,
+  JoinTable,
+  ManyToOne,
 } from "typeorm";
 import { User } from "./User";
 import { Labenu } from "./Labenu";
@@ -17,11 +19,20 @@ export enum ITask {
 
 @Entity()
 export class Task extends Labenu {
+  toJSON() {
+    const { limitDate, createdAt, updatedAt, ...task } = this;
+
+    return {
+      ...task,
+      limitDate: limitDate.toLocaleString("pt-BR", { dateStyle: "short" }),
+    };
+  }
+
   @Column()
   @Length(10, 40)
   description: string;
 
-  @CreateDateColumn({ type: 'timestamp', nullable: true })
+  @CreateDateColumn({ type: "timestamp", nullable: true })
   limitDate: Date;
 
   @Column({
@@ -32,6 +43,9 @@ export class Task extends Labenu {
   status: ITask;
 
   @ManyToMany(() => User)
-  @JoinTable({ name: "task_user" })
+  @JoinTable({ name: "tasks_users" })
   users: User[];
+
+  @ManyToOne(() => User, (user) => user.ownedTasks)
+  creatorUser: User;
 }

@@ -1,8 +1,8 @@
-import * as dayjs from "dayjs";
+import dayjs from "dayjs";
 import { validate, ValidationError } from "class-validator";
-import { DeleteResult, getRepository, Repository } from "typeorm";
+import { getRepository, Not, Repository } from "typeorm";
 import { RefreshToken } from "../models/RefreshToken";
-import { User } from "../models/User";
+import { profiles, User } from "../models/User";
 import { GenerateRefreshToken } from "../provider/GenerateRefreshToken";
 import { HashManager } from "../services/hashManager";
 import { authenticationData, Authenticator } from "../services/TokenGenerator";
@@ -75,24 +75,48 @@ export class UserBusiness {
     return { token, refreshToken };
   };
 
-  read = async ({ id }: UserRequestById): Promise<User | Error> => {
+  read = async (
+    token: string,
+    { id }: UserRequestById
+  ): Promise<User | Error> => {
     const repository: Repository<User> = getRepository(User);
-    const findUserById: User = await repository.findOne({ id });
-    if (!findUserById) return new Error("user Not Found");
-    return findUserById;
+    const accessToken: authenticationData =
+      new Authenticator().getUnsafeTokenData(token);
+    const user = await repository.findOne(accessToken.id);
+    if (!user) return new Error("User not found.");
+
+    let findUsers: User;
+    if ([profiles.ADMINISTRATOR, profiles.MODERATOR].includes(user.profile)) {
+      findUsers = await repository.findOne({
+        relations: ["ownedTasks"],
+        where: {
+          id,
+        },
+      });
+    } else {
+      if (user.id !== id) return new Error("you cannot see other users.");
+      findUsers = await repository.findOne({
+        relations: ["ownedTasks"],
+        where: {
+          id,
+        },
+      });
+    }
+
+    if (!findUsers) return new Error("user Not Found");
+    return findUsers;
   };
 
   update = async (
     token: string,
-    { id, name, nickname, email, password }: UserRequest
+    { name, nickname, email, password }: UserRequest
   ): Promise<User | Error> => {
     const repository: Repository<User> = getRepository(User);
-    const updateUser: User = await repository.findOne({ id });
-    const accessToken: authenticationData = new Authenticator().getTokenData(
-      token
-    );
+    const accessToken: authenticationData =
+      new Authenticator().getUnsafeTokenData(token);
 
-    if (accessToken === null) return new Error("invalid token");
+    const updateUser: User = await repository.findOne({ id: accessToken.id });
+
     if (!updateUser) return new Error("provided id not found.");
     updateUser.name = name ? name : updateUser.name;
     updateUser.nickname = nickname ? nickname : updateUser.nickname;
@@ -108,15 +132,29 @@ export class UserBusiness {
   ): Promise<Error | User> => {
     const repository: Repository<User> = getRepository(User);
 
-    const accessToken: authenticationData = new Authenticator().getTokenData(
-      token
-    );
+    const accessToken: authenticationData =
+      new Authenticator().getUnsafeTokenData(token);
 
-    if (accessToken === null) return new Error("invalid token");
+    const user: User = await repository.findOne({
+      id: accessToken.id,
+    });
+    if (!user) return new Error("User not found.");
 
-    const deleteUserById: User | Error = await repository.findOne({ id });
-    if (!deleteUserById) return new Error("provided id not found.");
-    await repository.delete({ id });
+    switch (user.profile) {
+      case profiles.ADMINISTRATOR:
+        if (id === user.id) return new Error("you cannot delete yourself.");
+        const deleteUserById: User = await repository
+          .createQueryBuilder("user")
+          .where({ id })
+          .getOne();
+
+        if (!deleteUserById) return new Error("provided id not found.");
+        await repository.delete(id);
+        break;
+      default:
+        await repository.delete(accessToken.id);
+        break;
+    }
   };
 
   refreshToken = async (
@@ -154,5 +192,11 @@ export class UserBusiness {
     });
 
     return { token };
+  };
+
+  listAll = async () => {
+    const repository: Repository<User> = getRepository(User);
+    const findUserById: User[] = await repository.find();
+    return findUserById;
   };
 }

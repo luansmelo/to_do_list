@@ -1,18 +1,30 @@
-import {
-  Entity,
-  Column,
-  ManyToMany,
-  JoinTable,
-  OneToOne,
-  JoinColumn,
-} from "typeorm";
+import { Entity, Column, OneToOne, ManyToMany, OneToMany } from "typeorm";
 import { IsEmail, Length } from "class-validator";
 import { Task } from "./Task";
 import { Labenu } from "./Labenu";
 import { RefreshToken } from "./RefreshToken";
 
+export enum profiles {
+  USER = "user",
+  MODERATOR = "moderator",
+  ADMINISTRATOR = "administrator",
+}
+
+export const allProfiles = [
+  profiles.USER,
+  profiles.MODERATOR,
+  profiles.ADMINISTRATOR,
+];
+
 @Entity()
 export class User extends Labenu {
+  toJSON() {
+    const { password, createdAt, updatedAt, ...user } = this;
+    return {
+      ...user,
+    };
+  }
+
   @Column()
   nickname: string;
 
@@ -29,10 +41,23 @@ export class User extends Labenu {
   })
   password: string;
 
+  @Column({
+    type: "enum",
+    enum: profiles,
+    default: profiles.USER,
+  })
+  profile: profiles;
+
   @OneToOne(() => RefreshToken, (refresh) => refresh.user_id)
   refresh_token: RefreshToken;
 
-  @ManyToMany(() => Task)
-  @JoinTable({ name: "task_user" })
-  task: Task[];
+  @ManyToMany(() => Task, {
+    cascade: true,
+  })
+  tasks: Task[];
+
+  @OneToMany(() => Task, (task) => task.creatorUser, {
+    cascade: true,
+  })
+  ownedTasks: Task[];
 }

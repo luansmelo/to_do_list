@@ -1,7 +1,13 @@
-import app from './app';
-import 'reflect-metadata';
-import './database';
+import app from "./app";
+import "reflect-metadata";
+import connection from "./database";
 
-app.listen(3006, () => {
-  console.log('🏃 Running Server');
-});
+connection
+  .then(() => {
+    app.listen(3006, () => {
+      console.log("🏃 Running Server");
+    });
+  })
+  .catch(() => {
+    console.log("error connection.");
+  });

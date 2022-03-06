@@ -19,6 +19,13 @@ export enum ITask {
 
 @Entity()
 export class Task extends Labenu {
+  toJSON() {
+    const { createdAt, updatedAt, ...task } = this;
+    return {
+      ...task,
+    };
+  }
+
   @Column()
   @Length(10, 40)
   description: string;

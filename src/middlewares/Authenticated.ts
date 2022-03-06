@@ -15,7 +15,7 @@ function authenticated(
   if (accessToken === null)
     return response.status(400).json({ message: "invalid token" });
 
-  next();
+  return next();
 }
 
 export { authenticated };

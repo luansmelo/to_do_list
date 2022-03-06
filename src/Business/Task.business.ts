@@ -17,7 +17,7 @@ export class TaskBusiness {
     const accessToken: authenticationData =
       new Authenticator().getUnsafeTokenData(token);
 
-     const repositoryUser = getRepository(User);
+    const repositoryUser = getRepository(User);
     const findOwner = await repositoryUser.findOne(accessToken.id);
     if (!findOwner) return new Error("User not Found");
 
@@ -25,9 +25,9 @@ export class TaskBusiness {
       await Promise.all(
         users.map((user) => repositoryUser.findOne({ id: user }))
       )
-    ).filter(Boolean);
-
-    if (!findUser.length) return new Error("Users Not Found.");
+    )
+      .filter(Boolean)
+      .filter((user) => user.id !== findOwner.id);
 
     const createTask: Task = repository.create({
       name,
@@ -91,6 +91,7 @@ export class TaskBusiness {
       await Promise.all(ids.map((user) => repositoryUser.findOne({ id: user })))
     )
       .filter(Boolean)
+      .filter((user) => user.id !== task.creatorUser.id)
       .filter(({ id }) => !task.users.find((user) => user.id === id));
 
     if (!findUser.length)

@@ -1,8 +1,8 @@
-import * as dayjs from "dayjs";
+import dayjs from "dayjs";
 import { validate, ValidationError } from "class-validator";
-import { getRepository, Repository } from "typeorm";
+import { getRepository, Not, Repository } from "typeorm";
 import { RefreshToken } from "../models/RefreshToken";
-import { User } from "../models/User";
+import { profiles, User } from "../models/User";
 import { GenerateRefreshToken } from "../provider/GenerateRefreshToken";
 import { HashManager } from "../services/hashManager";
 import { authenticationData, Authenticator } from "../services/TokenGenerator";
@@ -84,14 +84,14 @@ export class UserBusiness {
 
   update = async (
     token: string,
-    { id, name, nickname, email, password }: UserRequest
+    { name, nickname, email, password }: UserRequest
   ): Promise<User | Error> => {
     const repository: Repository<User> = getRepository(User);
-    const updateUser: User = await repository.findOne({ id });
     const accessToken: authenticationData =
       new Authenticator().getUnsafeTokenData(token);
 
-    if (accessToken === null) return new Error("invalid token");
+    const updateUser: User = await repository.findOne({ id: accessToken.id });
+
     if (!updateUser) return new Error("provided id not found.");
     updateUser.name = name ? name : updateUser.name;
     updateUser.nickname = nickname ? nickname : updateUser.nickname;
@@ -110,11 +110,26 @@ export class UserBusiness {
     const accessToken: authenticationData =
       new Authenticator().getUnsafeTokenData(token);
 
-    if (accessToken === null) return new Error("invalid token");
+    const user: User = await repository.findOne({
+      id: accessToken.id,
+    });
+    if (!user) return new Error("User not found.");
 
-    const deleteUserById: User | Error = await repository.findOne({ id });
-    if (!deleteUserById) return new Error("provided id not found.");
-    await repository.delete({ id });
+    switch (user.profile) {
+      case profiles.ADMINISTRATOR:
+        if (id === user.id) return new Error("you cannot delete yourself.");
+        const deleteUserById: User = await repository
+          .createQueryBuilder("user")
+          .where({ id })
+          .getOne();
+
+        if (!deleteUserById) return new Error("provided id not found.");
+        await repository.delete(id);
+        break;
+      default:
+        await repository.delete(accessToken.id);
+        break;
+    }
   };
 
   refreshToken = async (

@@ -1,7 +1,7 @@
 import { validate, ValidationError } from "class-validator";
-import { getRepository, Repository } from "typeorm";
+import { getRepository, In, Repository } from "typeorm";
 import { Task } from "../models/Task";
-import { User } from "../models/User";
+import { profiles, User } from "../models/User";
 import { authenticationData, Authenticator } from "../services/TokenGenerator";
 import { TaskRequest } from "../services/types";
 
@@ -51,14 +51,38 @@ export class TaskBusiness {
     return createTask;
   };
 
-  read = async (): Promise<Task[] | Error> => {
+  read = async (token: string): Promise<Task[] | Error> => {
     const repository: Repository<Task> = getRepository(Task);
-    const userTasks: Task[] = await repository.find({
-      relations: ["creatorUser", "users"],
-    });
-    if (!userTasks) return new Error("Task not found.");
+    const repositoryUser = getRepository(User);
 
-    return userTasks;
+    const accessToken: authenticationData =
+      new Authenticator().getUnsafeTokenData(token);
+
+    const user = await repositoryUser.findOne(accessToken.id);
+    if (!user) return new Error("User not Found");
+
+    let tasks: Task[];
+    if ([profiles.ADMINISTRATOR, profiles.MODERATOR].includes(user.profile)) {
+      tasks = await repository.find({
+        relations: ["creatorUser", "users"],
+      });
+    } else {
+      const checkUserTask = (
+        await repository.find({
+          relations: ["creatorUser", "users"],
+        })
+      ).filter(
+        (task) =>
+          task.creatorUser.id === user.id ||
+          task.users.some((userTask) => userTask.id === user.id)
+      );
+
+      if (!checkUserTask.length) return new Error("Task not found.");
+
+      tasks = checkUserTask;
+    }
+
+    return tasks;
   };
 
   insertUsers = async (
@@ -74,16 +98,32 @@ export class TaskBusiness {
 
     const findOwner = await repositoryUser.findOne(accessToken.id);
     if (!findOwner) return new Error("User not Found");
-
-    const task = await repository.findOne({
-      relations: ["creatorUser", "users"],
-      where: {
-        id: idTask,
-        creatorUser: {
-          id: findOwner.id,
+    let task: Task;
+    if (
+      [profiles.ADMINISTRATOR, profiles.MODERATOR].includes(findOwner.profile)
+    ) {
+      task = await repository.findOne({
+        relations: ["creatorUser", "users"],
+        where: {
+          id: idTask,
         },
-      },
-    });
+      });
+    } else {
+      const checkUserTask = await repository.findOne({
+        where: {
+          id: idTask,
+        },
+        relations: ["creatorUser", "users"],
+      });
+
+      if (!checkUserTask) return new Error("Task not found.");
+
+      if (
+        checkUserTask.creatorUser.id === findOwner.id ||
+        checkUserTask.users.some((user) => user.id === findOwner.id)
+      )
+        task = checkUserTask;
+    }
 
     if (!task) return new Error("Task not found");
 

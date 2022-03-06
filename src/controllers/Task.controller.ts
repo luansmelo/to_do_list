@@ -11,10 +11,12 @@ class TaskController {
     request: Request,
     response: Response
   ): Promise<Response> => {
-    const { name, description, limitDate, users } = ensureInterface(
-      request.body,
-      taskRequest
-    );
+    const {
+      name,
+      description,
+      limitDate,
+      users = [],
+    } = ensureInterface(request.body, taskRequest);
     const authentication: string = request.headers.authorization as string;
 
     const task: TaskBusiness = this.taskRepository;
@@ -32,7 +34,8 @@ class TaskController {
 
   findTask = async (request: Request, response: Response) => {
     const task = this.taskRepository;
-    const resultTask: Task[] | Error = await task.read();
+    const authecation: string = request.headers.authorization as string;
+    const resultTask: Task[] | Error = await task.read(authecation);
 
     if (resultTask instanceof Error)
       return response.status(400).json(resultTask.message);

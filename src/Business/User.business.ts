@@ -75,11 +75,36 @@ export class UserBusiness {
     return { token, refreshToken };
   };
 
-  read = async ({ id }: UserRequestById): Promise<User | Error> => {
+  read = async (
+    token: string,
+    { id }: UserRequestById
+  ): Promise<User | Error> => {
     const repository: Repository<User> = getRepository(User);
-    const findUserById: User = await repository.findOne({ id });
-    if (!findUserById) return new Error("user Not Found");
-    return findUserById;
+    const accessToken: authenticationData =
+      new Authenticator().getUnsafeTokenData(token);
+    const user = await repository.findOne(accessToken.id);
+    if (!user) return new Error("User not found.");
+
+    let findUsers: User;
+    if ([profiles.ADMINISTRATOR, profiles.MODERATOR].includes(user.profile)) {
+      findUsers = await repository.findOne({
+        relations: ["ownedTasks"],
+        where: {
+          id,
+        },
+      });
+    } else {
+      if (user.id !== id) return new Error("you cannot see other users.");
+      findUsers = await repository.findOne({
+        relations: ["ownedTasks"],
+        where: {
+          id,
+        },
+      });
+    }
+
+    if (!findUsers) return new Error("user Not Found");
+    return findUsers;
   };
 
   update = async (
@@ -167,5 +192,11 @@ export class UserBusiness {
     });
 
     return { token };
+  };
+
+  listAll = async () => {
+    const repository: Repository<User> = getRepository(User);
+    const findUserById: User[] = await repository.find();
+    return findUserById;
   };
 }

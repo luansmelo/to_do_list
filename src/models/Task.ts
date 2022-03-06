@@ -20,9 +20,11 @@ export enum ITask {
 @Entity()
 export class Task extends Labenu {
   toJSON() {
-    const { createdAt, updatedAt, ...task } = this;
+    const { limitDate, createdAt, updatedAt, ...task } = this;
+
     return {
       ...task,
+      limitDate: limitDate.toLocaleString("pt-BR", { dateStyle: "short" }),
     };
   }
 

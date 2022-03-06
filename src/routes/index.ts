@@ -1,4 +1,4 @@
-import { profiles, allProfiles } from "../models/User";
+import { profiles } from "../models/User";
 import { Router } from "express";
 import { TaskController } from "../controllers/Task.controller";
 import { UserController } from "../controllers/User.controller";
@@ -11,24 +11,20 @@ const taskRouter: TaskController = new TaskController();
 const routes = Router();
 routes.post("/user/login", userRouter.login);
 routes.post("/user/singup", userRouter.singup);
-routes.post("/user/auth", authenticated, allowed(allProfiles), userRouter.auth);
-routes.get(
-  "/user/:id",
-  authenticated,
-  allowed(allProfiles),
-  userRouter.findUserById
-);
+routes.post("/user/auth", authenticated, userRouter.auth);
+routes.get("/user/:id", authenticated, userRouter.findUserById);
 routes.put(
   "/user/edit/:id",
   authenticated,
-  allowed([profiles.MODERATOR, profiles.ADMINISTRATOR]),
+  allowed([profiles.ADMINISTRATOR, profiles.MODERATOR]),
   userRouter.updateUserById
 );
-routes.delete(
-  "/user/:id",
+routes.delete("/user/:id", authenticated, userRouter.deleteUserById);
+routes.get(
+  "/user",
   authenticated,
-  allowed(allProfiles),
-  userRouter.deleteUserById
+  allowed([profiles.ADMINISTRATOR, profiles.MODERATOR]),
+  userRouter.listAll
 );
 
 // Router the task

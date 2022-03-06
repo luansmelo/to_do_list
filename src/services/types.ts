@@ -43,7 +43,7 @@ const taskRequest = Schema.object({
   name: Schema.string(),
   description: Schema.string(),
   limitDate: Schema.string(),
-  users: Schema.array(Schema.string()),
+  users: Schema.optional().array(Schema.string()),
 });
 
 type TaskRequest = GetTypeGuard<typeof taskRequest>

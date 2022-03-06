@@ -46,7 +46,8 @@ class UserController {
   ): Promise<Response> => {
     const { id } = request.params;
     const user: UserBusiness = this.userRepository;
-    const result: User | Error = await user.read({ id });
+    const authecation: string = request.headers.authorization as string;
+    const result: User | Error = await user.read(authecation, { id });
 
     if (result instanceof Error)
       return response.status(400).json(result.message);
@@ -86,6 +87,13 @@ class UserController {
     if (result instanceof Error)
       return response.status(200).json(result.message);
     return response.status(200).json("User successfully deleted.");
+  };
+
+  listAll = async (request: Request, response: Response) => {
+    const user = this.userRepository;
+    const listAllUsers: User[] = await user.listAll();
+
+    return response.status(200).json(listAllUsers);
   };
 }
 

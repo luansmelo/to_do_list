@@ -4,7 +4,7 @@ import * as dayjs from "dayjs";
 
 class GenerateRefreshToken {
   async execute(userid: string): Promise<RefreshToken> {
-    const expiresIn: number = dayjs().add(15, "second").unix();
+    const expiresIn: number = dayjs().add(900, "second").unix();
     const repository: Repository<RefreshToken> = getRepository(RefreshToken);
     const genereteRefreshToken: RefreshToken = repository.create({
       user_id: userid,

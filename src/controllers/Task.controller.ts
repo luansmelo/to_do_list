@@ -57,12 +57,30 @@ class TaskController {
   insertUsers = async (request: Request, response: Response) => {
     const { idTask, ids } = request.body;
     const task = this.taskRepository;
-    const authecation = request.headers.authorization as string;
-    const insertUserTask = await task.insertUsers(authecation, idTask, ids);
+    const authentication = request.headers.authorization as string;
+    const insertUserTask = await task.insertUsers(authentication, idTask, ids);
 
     if (insertUserTask instanceof Error)
       return response.status(400).json(insertUserTask.message);
     return response.json(insertUserTask);
+  };
+
+  alterStatus = async (request: Request, response: Response) => {
+    const { idTask, statusTask, tasksId = [] } = request.body;
+    const authentication = request.headers.authorization as string;
+
+    const task = this.taskRepository;
+    const result = await task.alterStatus(
+      authentication,
+      idTask,
+      statusTask,
+      tasksId
+    );
+
+    if (result instanceof Error)
+      return response.status(400).json(result.message);
+
+    return response.status(200).json(result);
   };
 }
 

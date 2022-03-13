@@ -13,7 +13,8 @@ export function allowed(profiles: profiles[]) {
     const user = await repository.findOne({ id: accessToken.id });
     if (!user) return response.status(400).json({ message: "User not found." });
 
-    if(!profiles.includes(user.profile)) return response.status(403).json({message: "forbidden access"})
-    return next()
+    if (!profiles.includes(user.profile))
+      return response.status(403).json({ message: "forbidden access" });
+    return next();
   };
 }

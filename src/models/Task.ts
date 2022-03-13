@@ -3,7 +3,6 @@ import {
   Column,
   Entity,
   CreateDateColumn,
-  OneToMany,
   ManyToMany,
   JoinTable,
   ManyToOne,
@@ -19,20 +18,12 @@ export enum ITask {
 
 @Entity()
 export class Task extends Labenu {
-  toJSON() {
-    const { limitDate, createdAt, updatedAt, ...task } = this;
-
-    return {
-      ...task,
-      limitDate: limitDate.toLocaleString("pt-BR", { dateStyle: "short" }),
-    };
-  }
 
   @Column()
   @Length(10, 40)
   description: string;
 
-  @CreateDateColumn({ type: "timestamp", nullable: true })
+  @CreateDateColumn({ nullable: true })
   limitDate: Date;
 
   @Column({

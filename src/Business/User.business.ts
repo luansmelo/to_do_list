@@ -1,4 +1,4 @@
-import dayjs from "dayjs";
+import * as dayjs from "dayjs";
 import { validate, ValidationError } from "class-validator";
 import { getRepository, Not, Repository } from "typeorm";
 import { RefreshToken } from "../models/RefreshToken";

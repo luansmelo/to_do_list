@@ -33,5 +33,6 @@ routes.post("/task", authenticated, taskRouter.createTask);
 routes.post("/task/deleteUsers", authenticated, taskRouter.deleteUsers);
 routes.post("/task/insertUsers", authenticated, taskRouter.insertUsers);
 routes.get("/task/find", authenticated, taskRouter.findTask);
+routes.post("/task/status", authenticated, taskRouter.alterStatus);
 
 export { routes };
